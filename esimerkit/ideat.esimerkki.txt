@@ -1,0 +1,8 @@
+# Ideatiedosto: yksi idea per rivi.
+# id | otsikko | yksi lause | valinnaiset avain=arvo -kentat
+# Avaimet: haku (englanninkieliset hakusanat npm/GitHub-hakuun), riippuu (pilkulla erotetut id:t),
+# tila (avoin, kesken, valmis, hylatty), koko ja hyoty (oma arvio 1-5, ohittaa mallin).
+pr-katselmoija | PR-katselmoija | GitHub Action, joka katselmoi pull requestit tekoalylla | haku=ai pull request review github action | riippuu=sandbox
+sandbox | Sandbox-kontti | Eristetty ajokontti agenttien koodiluonnoksille
+mallivertailu | Mallivertailu | Halpa vs vahva malli samalla evalsetilla | koko=3 | hyoty=4
+vanha-idea | Vanha idea | Tehty jo, ei enaa jonossa | tila=valmis

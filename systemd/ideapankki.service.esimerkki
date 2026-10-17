@@ -1,0 +1,28 @@
+[Unit]
+Description=ideapankki: ideoiden esitutkimus ja priorisointi
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ideapankki
+Group=ideapankki
+WorkingDirectory=/opt/agentit/ideapankki
+EnvironmentFile=/etc/agentti/ideapankki.env
+ExecStart=/usr/bin/python3 -B -m agentti --agentti ideapankki --tila /var/lib/agentti/ideapankki --verkko --llm --send
+TimeoutStartSec=300
+NoNewPrivileges=true
+ProtectSystem=strict
+# tila + ehdotuskansio (kansion omistajuus ratkaistaan asennuksessa, ks. DEPLOY.md)
+ReadWritePaths=/var/lib/agentti/ideapankki /var/lib/agentti/ehdotukset
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=

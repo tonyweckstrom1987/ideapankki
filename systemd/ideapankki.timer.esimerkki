@@ -1,0 +1,12 @@
+[Unit]
+Description=ideapankki: viikkoajo
+
+[Timer]
+# Sunnuntaisin ennen infra-raporttia (18:00). systemd kayttaa palvelimen aikavyohyketta;
+# tarkista `timedatectl` ennen kayttoonottoa.
+OnCalendar=Sun *-*-* 17:30:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
