@@ -10,7 +10,7 @@ KULU_KUUKAUSI_USD = 1.00     # kuukauden kulukatto (alle 31 x paivakatto, jotta 
 KUTSUT_PAIVA = 3             # LLM-kutsuja enintaan paivassa
 KUTSU_ARVIO_USD = 0.015      # pessimistinen varaus ennen jokaista kutsua
 
-MAX_TOKENS = 2000            # vastauksen katto per kutsu
+MAX_TOKENS = 3000            # vastauksen katto per kutsu (2000 katkaisi 8 idean vastauksen, 17.10.)
 LLM_AIKAKATKAISU = 120       # sekuntia
 
 TELEGRAM_MAX_MERKKEJA = 3500

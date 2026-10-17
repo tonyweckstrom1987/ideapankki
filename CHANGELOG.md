@@ -1,5 +1,9 @@
 # Muutosloki
 
+## 0.1.1 (17.10.2026)
+
+- Lukittu raja `MAX_TOKENS` 2000 -> 3000 (Tonyn lupa). Ensimmainen oikea ajo (deepseek-flash, 8 ideaa) katkesi 2000 tokeniin (`llm_vastaus_katkaistu`); sama syy kuin paivakatsauksella. Paiva- ja kuukausikatto ennallaan.
+
 ## 0.1.0
 
 Ensimmainen versio. Rakennettu agentti-pohja 0.1.0:n paalle (ensimmainen oikea agentti pohjasta).
