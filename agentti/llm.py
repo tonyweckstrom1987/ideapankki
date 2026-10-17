@@ -89,6 +89,10 @@ def kysy(viestit, malli, env, kulu, hae=None, max_tokens=None):
         "messages": viestit,
         "max_tokens": min(int(max_tokens or rajat.MAX_TOKENS), rajat.MAX_TOKENS),
         "temperature": 0,
+        # deepseek-flash "ajattelee" oletuksena: 17.10. ajattelu kulutti 4950 / 6000 tokenia ja
+        # vastaus katkesi. LiteLLM hylkaa reasoning_effort ja thinking (400), mutta valittaa
+        # tama OpenRouterin parametri. Mittaus: 907 tokenia, ajattelu 0, JSON ok.
+        "reasoning": {"enabled": False},
     }  # tarkoituksella ei 'tools' / 'functions'
     vastaus = hae(osoite.rstrip("/") + "/chat/completions", avain, payload)
     kaytto = vastaus.get("usage") if isinstance(vastaus, dict) else None

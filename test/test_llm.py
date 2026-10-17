@@ -42,6 +42,13 @@ class LLMTesti(unittest.TestCase):
         self.assertNotIn("functions", payload)
         self.assertNotIn("tool_choice", payload)
 
+    def test_ajattelu_on_pois_paalta(self):
+        # ilman tata deepseek-flash kulutti suurimman osan max_tokensista ajatteluun ja vastaus katkesi
+        self.kysy(llm_vastaus("x"))
+        self.assertEqual(self.kutsut[0][2]["reasoning"], {"enabled": False})
+        self.assertNotIn("reasoning_effort", self.kutsut[0][2])
+        self.assertNotIn("thinking", self.kutsut[0][2])
+
     def test_max_tokens_katto(self):
         self.kysy(llm_vastaus("x"), max_tokens=10 ** 6)
         self.assertEqual(self.kutsut[0][2]["max_tokens"], rajat.MAX_TOKENS)
