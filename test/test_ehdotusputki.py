@@ -12,55 +12,60 @@ class EhdotusputkiTesti(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.kansio = self.tmp.name
 
-    def test_kirjoittaa_numeroidun_tiedoston(self):
-        n1 = ep.kirjoita(self.kansio, "Otsikko", "Teksti", kello())
-        n2 = ep.kirjoita(self.kansio, "Toinen", "Teksti", kello())
-        self.assertEqual((n1, n2), ("PENDING-2026-10-16-1.md", "PENDING-2026-10-16-2.md"))
-        with open(os.path.join(self.kansio, n1), encoding="utf-8") as f:
-            sisalto = f.read()
-        self.assertIn("tila: PENDING", sisalto)
-        self.assertIn("lahde: ideapankki", sisalto)
+    def lue(self, nimi):
+        with open(os.path.join(self.kansio, nimi), encoding="utf-8") as f:
+            return f.read()
 
-    def test_numero_jatkuu_olemassa_olevista(self):
-        open(os.path.join(self.kansio, "PENDING-2026-10-15-7.md"), "w").close()
-        self.assertEqual(ep.kirjoita(self.kansio, "o", "t", kello()), "PENDING-2026-10-16-8.md")
+    def test_kirjoittaa_yhden_rivin_tekstitiedoston(self):
+        nimi = ep.kirjoita(self.kansio, "Aloita seuraavaksi: X (12/15)", kello())
+        self.assertRegex(nimi, r"^ideapankki-2026-10-16-[0-9a-f]{8}\.txt$")
+        self.assertEqual(self.lue(nimi), "Aloita seuraavaksi: X (12/15)\n")
+
+    def test_ei_numeroi_eika_kayta_pending_nimia(self):
+        ep.kirjoita(self.kansio, "a", kello())
+        ep.kirjoita(self.kansio, "b", kello())
+        for nimi in os.listdir(self.kansio):
+            self.assertFalse(nimi.startswith("PENDING"))
+            self.assertTrue(nimi.endswith(".txt"))
 
     def test_teksti_rajataan_140_merkkiin_ja_rivinvaihdot_poistetaan(self):
-        n = ep.kirjoita(self.kansio, "o\nx", "a\n" * 200, kello())
-        with open(os.path.join(self.kansio, n), encoding="utf-8") as f:
-            rivit = f.read().splitlines()
-        self.assertEqual(rivit[0], "# o x")
-        self.assertLessEqual(len(rivit[2]), ep.TEKSTI_MAX)
+        nimi = ep.kirjoita(self.kansio, "a\n" * 200, kello())
+        rivit = self.lue(nimi).splitlines()
+        self.assertEqual(len(rivit), 1)
+        self.assertLessEqual(len(rivit[0]), ep.TEKSTI_MAX)
+
+    def test_tyhja_teksti_hylataan(self):
+        with self.assertRaises(ep.EhdotusVirhe) as e:
+            ep.kirjoita(self.kansio, " \n ", kello())
+        self.assertEqual(e.exception.koodi, "posti_tyhja")
+        self.assertEqual(os.listdir(self.kansio), [])
 
     def test_puuttuva_kansio_ei_luoda(self):
         polku = os.path.join(self.kansio, "ei-ole")
         with self.assertRaises(ep.EhdotusVirhe) as e:
-            ep.kirjoita(polku, "o", "t", kello())
-        self.assertEqual(e.exception.koodi, "ehdotukset_kansio")
+            ep.kirjoita(polku, "t", kello())
+        self.assertEqual(e.exception.koodi, "posti_kansio")
         self.assertFalse(os.path.exists(polku))
 
-    def test_numerokilpailu_ei_ylikirjoita_vaan_epaonnistuu(self):
-        nimi = ep.kirjoita(self.kansio, "o", "t", kello())
-        polku = os.path.join(self.kansio, nimi)
-        with open(polku) as f:
-            alku = f.read()
-        vanha = ep.seuraava_numero
-        ep.seuraava_numero = lambda kansio: 1  # kilpaileva kirjoittaja on aina ehtinyt ensin
-        self.addCleanup(setattr, ep, "seuraava_numero", vanha)
+    def test_symlink_kansio_hylataan(self):
+        oikea = os.path.join(self.kansio, "oikea")
+        os.mkdir(oikea)
+        linkki = os.path.join(self.kansio, "linkki")
+        os.symlink(oikea, linkki)
         with self.assertRaises(ep.EhdotusVirhe) as e:
-            ep.kirjoita(self.kansio, "uusi", "uusi teksti", kello())
-        self.assertEqual(e.exception.koodi, "ehdotukset_numero")
-        with open(polku) as f:
-            self.assertEqual(f.read(), alku)
+            ep.kirjoita(linkki, "t", kello())
+        self.assertEqual(e.exception.koodi, "posti_kansio")
+        self.assertEqual(os.listdir(oikea), [])
 
-    def test_ei_ylikirjoita_olemassa_olevaa(self):
-        nimi = ep.kirjoita(self.kansio, "o", "t", kello())
-        polku = os.path.join(self.kansio, nimi)
-        with open(polku, "a") as f:
+    def test_sama_teksti_samana_paivana_ei_ylikirjoita(self):
+        nimi = ep.kirjoita(self.kansio, "sama", kello())
+        with open(os.path.join(self.kansio, nimi), "a", encoding="utf-8") as f:
             f.write("oma-merkinta\n")
-        ep.kirjoita(self.kansio, "o2", "t2", kello())
-        with open(polku) as f:
-            self.assertIn("oma-merkinta", f.read())
+        self.assertEqual(ep.kirjoita(self.kansio, "sama", kello()), nimi)
+        self.assertIn("oma-merkinta", self.lue(nimi))
+
+    def test_eri_teksti_eri_tiedosto(self):
+        self.assertNotEqual(ep.kirjoita(self.kansio, "yksi", kello()), ep.kirjoita(self.kansio, "kaksi", kello()))
 
 
 if __name__ == "__main__":

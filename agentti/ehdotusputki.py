@@ -1,18 +1,18 @@
-"""Ehdotusputken liitin: kirjoittaa yhden ehdotuksen PENDING-tiedostona ehdotuskansioon.
+"""Ehdotusputken liitin: jattaa yhden ehdotuksen POSTILAATIKKOON, ei suoraan paivakatsauksen ehdotuskansioon.
 
-HUOM: tiedostomuoto on OLETUS paivakatsauksen putkesta (PENDING-PVM-N.md: otsikko, teksti max 140
-merkkia, luotu, tila). Ennen kayttoonottoa se tarkistetaan oikeaa proposals.py:ta vastaan ja
-tama on ainoa tiedosto, jota silloin muutetaan. Kansiota ei luoda (omistajuus ratkaistaan
-asennuksessa), tiedosto luodaan atomisesti ('x'), olemassa olevaa ei koskaan ylikirjoiteta.
-Ehdotus ei suorita mitaan: /hyvaksy vain merkitsee sen.
+Miksi: paivakatsauksen ehdotukset (PENDING-PVM-N.md) kulkevat sen omasta proposals.py:sta: oma
+numerolaskuri, lukko, tarkka tiedostomuoto ja vanhentuminen. Toisen agentin ei pida arvata niita eika
+kirjoittaa sen kansioon. Ideapankki kirjoittaa vain yhden rivin tekstitiedoston (ideapankki-PVM-TIIVISTE.txt)
+yhteiseen postilaatikkokansioon; paivakatsaus lukee sen ja luo varsinaisen ehdotuksen omalla koodillaan
+(numero, siivous, kaksoiskappaleiden esto). Tama liitin ei koskaan numeroi, ylikirjoita tai poista mitaan.
+Kansiota ei luoda (omistajuus ratkaistaan asennuksessa). Ehdotus ei suorita mitaan: /hyvaksy vain merkitsee sen.
 """
+import hashlib
 import os
-import re
 
 from . import config
 
 TEKSTI_MAX = 140
-NUMERO_RE = re.compile(r"-(\d{1,4})\.md$")
 
 
 class EhdotusVirhe(Exception):
@@ -25,31 +25,22 @@ def _siisti(teksti, pituus):
     return " ".join(str(teksti).split())[:pituus]
 
 
-def seuraava_numero(kansio):
-    suurin = 0
-    for nimi in os.listdir(kansio):
-        m = NUMERO_RE.search(nimi)
-        if m:
-            suurin = max(suurin, int(m.group(1)))
-    return suurin + 1
-
-
-def kirjoita(kansio, otsikko, teksti, kello=None):
-    """Palauttaa kirjoitetun tiedoston nimen. Nostaa EhdotusVirhe."""
-    if not kansio or not os.path.isdir(kansio):
-        raise EhdotusVirhe("ehdotukset_kansio")
+def kirjoita(kansio, teksti, kello=None):
+    """Kirjoittaa yhden rivin tekstitiedoston postilaatikkoon. Palauttaa tiedoston nimen.
+    Sama teksti samana paivana on jo toimitettu: palautetaan sama nimi koskematta tiedostoon."""
+    if not kansio or not os.path.isdir(kansio) or os.path.islink(kansio):
+        raise EhdotusVirhe("posti_kansio")
+    rivi = _siisti(teksti, TEKSTI_MAX)
+    if not rivi:
+        raise EhdotusVirhe("posti_tyhja")
     pvm = config.paiva(kello() if kello else None)
-    sisalto = "# %s\n\n%s\n\nluotu: %s\ntila: PENDING\nlahde: ideapankki\n" % (
-        _siisti(otsikko, 80), _siisti(teksti, TEKSTI_MAX), pvm)
+    tiiviste = hashlib.sha256(rivi.encode("utf-8")).hexdigest()[:8]
+    nimi = "ideapankki-%s-%s.txt" % (pvm, tiiviste)
     try:
-        for _ in range(20):
-            nimi = "PENDING-%s-%d.md" % (pvm, seuraava_numero(kansio))
-            try:
-                with open(os.path.join(kansio, nimi), "x", encoding="utf-8") as f:
-                    f.write(sisalto)
-                return nimi
-            except FileExistsError:
-                continue  # kilpaileva kirjoittaja otti numeron
+        with open(os.path.join(kansio, nimi), "x", encoding="utf-8") as f:
+            f.write(rivi + "\n")
+    except FileExistsError:
+        pass
     except OSError:
-        raise EhdotusVirhe("ehdotukset_kirjoitus")
-    raise EhdotusVirhe("ehdotukset_numero")
+        raise EhdotusVirhe("posti_kirjoitus")
+    return nimi

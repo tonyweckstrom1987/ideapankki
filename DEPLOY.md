@@ -4,9 +4,10 @@ Tämä ohje on tarkoituksella luettelo, jota ajetaan käsin kohta kerrallaan. Mi
 
 ## 0. Ennen kuin mitään asennetaan
 
-1. Tarkista ehdotusputken oikea muoto: lue päiväkatsauksen `proposals.py` ja `ehdotukset/`-kansion tiedostonimi ja -sisältö. Jos muoto poikkeaa tämän repon `ehdotusputki.py`:stä (`PENDING-PVM-N.md`: otsikko, teksti max 140 merkkiä, luotu, tila), muuta vain sitä tiedostoa ja sen testiä.
-2. Ratkaise kirjoitusoikeus: ideapankki-käyttäjän pitää voida luoda tiedostoja ehdotuskansioon, mutta ei lukea päiväkatsauksen salaisuuksia. Suositus: yhteinen ryhmä `ehdotukset`, kansiolle `chmod 2775` (setgid), molemmat käyttäjät ryhmään. Älä anna ideapankille oikeutta päiväkatsauksen kotikansioon.
-3. Ota snapshot kontista.
+1. Ehdotusputki toimii postilaatikon kautta, ei päiväkatsauksen omaan kansioon kirjoittaen. Päiväkatsauksen ehdotukset (`PENDING-PVM-N.md`) kulkevat sen omasta `proposals.py`:stä: oma numerolaskuri, lukko ja tarkka tiedostomuoto, joita toisen agentin ei pidä arvata. Ideapankki jättää vain yhden rivin tekstitiedoston (`ideapankki-PVM-TIIVISTE.txt`, max 140 merkkiä) postilaatikkoon, ja päiväkatsaus luo varsinaisen ehdotuksen omalla `luo_ehdotukset`-funktiollaan.
+2. Päiväkatsauksen puolelle tarvitaan pieni muutos (postilaatikon lukija: vain viimeiset 3 päivää, vain tavalliset tiedostot, siivous `render.kentta`:lla, sitten `luo_ehdotukset`). Se tehdään päiväkatsauksen omassa repossa omalla promptillaan, ei tässä. Ennen sitä ideapankin Telegram-jono toimii sellaisenaan ja postilaatikkoon kertyvät tiedostot odottavat.
+3. Oikeudet: kansio `/var/lib/agentti/ehdotus-posti`, omistaja `ideapankki`, ryhmä `ehdotusposti`, `chmod 2750`; `paivakatsaus`-käyttäjä ryhmään `ehdotusposti` (vain luku). Päiväkatsaus ei kirjoita eikä poista postilaatikosta.
+4. Ota snapshot kontista.
 
 ## 1. Käyttäjä ja kansiot
 
@@ -15,6 +16,10 @@ useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin ideapankki
 install -d -o root -g root -m 755 /opt/agentit/ideapankki
 install -d -o ideapankki -g ideapankki -m 700 /var/lib/agentti/ideapankki
 install -d -m 755 /etc/agentti
+groupadd --system ehdotusposti
+usermod -aG ehdotusposti paivakatsaus     # vain luku
+usermod -aG ehdotusposti ideapankki
+install -d -o ideapankki -g ehdotusposti -m 2750 /var/lib/agentti/ehdotus-posti
 ```
 
 Kopioi repon sisältö kohtaan `/opt/agentit/ideapankki` (omistaja root, ei kirjoitusoikeutta ideapankille).
@@ -26,7 +31,7 @@ Kopioi repon sisältö kohtaan `/opt/agentit/ideapankki` (omistaja root, ei kirj
 
 ```
 IDEAT_TIEDOSTO=/etc/agentti/ideapankki-ideat.txt
-EHDOTUKSET_KANSIO=/var/lib/agentti/ehdotukset
+EHDOTUS_POSTILAATIKKO=/var/lib/agentti/ehdotus-posti
 LLM_BASE_URL=http://litellm.example:4000/v1
 LLM_API_KEY=            # oma LiteLLM-avain "ideapankki": vain deepseek-flash, budjetti 1 USD / 30 pv
 TELEGRAM_BOT_TOKEN=     # päiväkatsauksen botti (ehdotukset ja /hyvaksy kulkevat sen kautta)
@@ -60,5 +65,5 @@ systemctl list-timers ideapankki.timer
 ## 5. Varmistus
 
 - `journalctl -u ideapankki.service --no-pager | tail -30`
-- Telegramissa jono; ehdotuskansiossa yksi PENDING-tiedosto; `/hyvaksy n` vain merkitsee.
+- Telegramissa jono; postilaatikossa (`ls -l /var/lib/agentti/ehdotus-posti`) yksi ideapankki-*.txt; kun päiväkatsauksen lukija on asennettu, siitä syntyy PENDING-ehdotus; `/hyvaksy n` vain merkitsee.
 - Rikkinäinen välimuisti (`/var/lib/agentti/ideapankki/ideapankki.json`): ajo pysähtyy virhekoodiin `kerays_valimuisti_rikki`; tarkista tiedosto, älä poista sitä sokkona (tuloksia on voinut kulua rahaa ja hakurajoja).

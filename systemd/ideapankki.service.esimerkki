@@ -14,7 +14,8 @@ TimeoutStartSec=300
 NoNewPrivileges=true
 ProtectSystem=strict
 # tila + ehdotuskansio (kansion omistajuus ratkaistaan asennuksessa, ks. DEPLOY.md)
-ReadWritePaths=/var/lib/agentti/ideapankki /var/lib/agentti/ehdotukset
+UMask=0027
+ReadWritePaths=/var/lib/agentti/ideapankki /var/lib/agentti/ehdotus-posti
 ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true

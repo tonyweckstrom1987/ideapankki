@@ -28,11 +28,11 @@ class IdeapankkiTesti(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.tila = os.path.join(self.tmp.name, "tila")
         self.ideat = os.path.join(self.tmp.name, "ideat.txt")
-        self.ehd = os.path.join(self.tmp.name, "ehdotukset")
+        self.ehd = os.path.join(self.tmp.name, "posti")
         os.makedirs(self.ehd)
         with open(self.ideat, "w", encoding="utf-8") as f:
             f.write(IDEAT)
-        self.env = dict(ENV, IDEAT_TIEDOSTO=self.ideat, EHDOTUKSET_KANSIO=self.ehd)
+        self.env = dict(ENV, IDEAT_TIEDOSTO=self.ideat, EHDOTUS_POSTILAATIKKO=self.ehd)
         self.llm_kutsut, self.tg, self.haut = [], [], []
 
     def hae_llm(self, vastaus):
@@ -356,7 +356,7 @@ class IdeapankkiTesti(unittest.TestCase):
         tiedostot = os.listdir(self.ehd)
         self.assertEqual(len(tiedostot), 1)
         with open(os.path.join(self.ehd, tiedostot[0]), encoding="utf-8") as f:
-            self.assertIn("tila: PENDING", f.read())
+            self.assertTrue(f.read().startswith("Aloita seuraavaksi: "))
         self.aja(self.taysi_vastaus(), paiva=18)       # sama paras idea, alle 14 pv: ehdotetaan seuraava
         self.assertEqual(len(os.listdir(self.ehd)), 2)
         self.assertEqual(len(set(self.valimuisti()["ehdotettu"])), 2)
@@ -371,7 +371,7 @@ class IdeapankkiTesti(unittest.TestCase):
         os.rmdir(self.ehd)
         t = self.aja(self.taysi_vastaus())
         self.assertEqual(t["koodi"], 0)
-        self.assertIn("ehdotukset_kansio", t["teksti"])
+        self.assertIn("posti_kansio", t["teksti"])
 
 
 def _llm_virhe():

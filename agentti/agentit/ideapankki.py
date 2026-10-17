@@ -312,7 +312,7 @@ def render_kuiva(data):
 
 def _ehdota(ctx, jono, valimuisti, paiva):
     """Yksi ehdotus per ajo: paras vapaa pisteytetty idea, ei samaa uudestaan liian pian."""
-    kansio = ctx.env.get("EHDOTUKSET_KANSIO")
+    kansio = ctx.env.get("EHDOTUS_POSTILAATIKKO")
     if not (ctx.laheta and kansio):
         return None
     for r in jono:
@@ -323,11 +323,11 @@ def _ehdota(ctx, jono, valimuisti, paiva):
             continue
         teksti = "Aloita seuraavaksi: %s (%d/%d)" % (r["otsikko"], r["piste"], jono_mod.piste_max())
         try:
-            kirjoita_ehdotus(kansio, "Ideapankki: %s" % r["otsikko"], teksti, ctx.kello)
+            kirjoita_ehdotus(kansio, teksti, ctx.kello)
         except EhdotusVirhe as e:
             return "Ehdotus ei mennyt putkeen (%s)." % e.koodi
         valimuisti["ehdotettu"][r["id"]] = paiva
-        return "Ehdotus kirjattu putkeen: %s." % r["otsikko"]
+        return "Ehdotus jatetty postilaatikkoon: %s." % r["otsikko"]
     return None
 
 

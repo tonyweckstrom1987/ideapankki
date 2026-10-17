@@ -40,7 +40,7 @@ def main(argv=None):
             return 2
     env.update({k: v for k, v in os.environ.items() if k in (
         "LLM_BASE_URL", "LLM_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "SYDAN_URL",
-        "IDEAT_TIEDOSTO", "EHDOTUKSET_KANSIO")})
+        "IDEAT_TIEDOSTO", "EHDOTUS_POSTILAATIKKO")})
 
     tulos = ajo.suorita(agentti, env, args.tila, llm=args.llm, laheta=args.send, verkko=args.verkko)
     print(tulos["teksti"])

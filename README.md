@@ -47,7 +47,7 @@ Suurin mahdollinen on 15. Jos koko tai hyöty puuttuu (ei omaa eikä mallin arvi
 - Kulukatto, päivän kutsuraja ja eräkoko (8 ideaa per ajo) ovat `rajat.py`:ssä. Rikkinäinen välimuisti pysäyttää ajon eikä nollaudu hiljaa.
 - Haun tulos tallennetaan, vaikka mallikutsu epäonnistuisi, jotta hakurajat eivät kulu turhaan.
 
-**Rajoitukset.** Esitutkimus ei ole takuu: hakusanat ovat yksi näkökulma, eikä npm- tai GitHub-haku löydä kaikkea (esimerkiksi PyPI:tä, blogeja tai suljettuja tuotteita). "Ei samankaltaista" tarkoittaa "ei viidestä parhaasta hausta". Mallin koko- ja hyötyarviot ovat karkeita; omat arviot (`koko=`, `hyoty=`) ohittavat ne. Ehdotusputken tiedostomuoto on oletus ja tarkistetaan käyttöönotossa (`ehdotusputki.py`).
+**Rajoitukset.** Esitutkimus ei ole takuu: hakusanat ovat yksi näkökulma, eikä npm- tai GitHub-haku löydä kaikkea (esimerkiksi PyPI:tä, blogeja tai suljettuja tuotteita). "Ei samankaltaista" tarkoittaa "ei viidestä parhaasta hausta". Mallin koko- ja hyötyarviot ovat karkeita; omat arviot (`koko=`, `hyoty=`) ohittavat ne. Ehdotukset eivät mene suoraan päiväkatsauksen kansioon: ideapankki jättää yhden rivin tekstitiedoston postilaatikkoon (`ehdotusputki.py`), ja vastaanottava agentti luo varsinaisen ehdotuksen omalla numeroinnillaan ja lukituksellaan.
 
 ## Ajot
 
@@ -57,7 +57,7 @@ python -m agentti --agentti ideapankki --verkko --llm        # hae ja arvioi (en
 python -m agentti --agentti ideapankki --verkko --llm --send # lisäksi Telegram ja ehdotus putkeen
 ```
 
-Ympäristö: `IDEAT_TIEDOSTO` (oletus `ideat.txt`), `EHDOTUKSET_KANSIO`, `LLM_BASE_URL`, `LLM_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Käyttöönotto: `DEPLOY.md` ja `systemd/ideapankki.*.esimerkki`.
+Ympäristö: `IDEAT_TIEDOSTO` (oletus `ideat.txt`), `EHDOTUS_POSTILAATIKKO`, `LLM_BASE_URL`, `LLM_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Käyttöönotto: `DEPLOY.md` ja `systemd/ideapankki.*.esimerkki`.
 
 ## Testit
 
@@ -65,7 +65,7 @@ Ympäristö: `IDEAT_TIEDOSTO` (oletus `ideat.txt`), `EHDOTUKSET_KANSIO`, `LLM_BA
 python -m unittest discover -s . -t . -p 'test_*.py'
 ```
 
-163 testiä, ja 42 tarkoituksella rikottua kohtaa kaatuu testeihin (ensimmäisellä kierroksella osa selvisi, mikä paikkasi testejä: omat ja mallin pisteet, esitutkimuksen vanheneminen, numerokilpailu ehdotuksissa).
+165 testiä, ja 45 tarkoituksella rikottua kohtaa kaatuu testeihin (ensimmäisellä kierroksella osa selvisi, mikä paikkasi testejä: omat ja mallin pisteet, esitutkimuksen vanheneminen, tiedoston ylikirjoitus postilaatikossa).
 
 ## Pohja
 
