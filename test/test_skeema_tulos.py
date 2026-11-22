@@ -78,6 +78,29 @@ class TulosTesti(unittest.TestCase):
         teksti = "```json\n" + json.dumps({"tila": "ok", "sisalto": {"t": "a"}}) + "\n```"
         self.assertEqual(tulos.lue(teksti, SIS).sisalto["t"], "a")
 
+    def _ok(self):
+        return json.dumps({"tila": "ok", "sisalto": {"t": "a"}})
+
+    def test_teksti_json_ymparilla(self):
+        for teksti in ("Tassa arvio:\n" + self._ok(),
+                       self._ok() + "\nToivottavasti auttaa!",
+                       "Tassa arvio {ei json}:\n" + self._ok() + "\nValmis."):
+            self.assertEqual(tulos.lue(teksti, SIS).sisalto["t"], "a")
+
+    def test_koodiaita_tekstin_keskella(self):
+        teksti = "Tassa arvio:\n```json\n" + self._ok() + "\n```\nLoppu."
+        self.assertEqual(tulos.lue(teksti, SIS).sisalto["t"], "a")
+
+    def test_katkennut_json_on_edelleen_virhe(self):
+        with self.assertRaises(tulos.TulosVirhe) as e:
+            tulos.lue(self._ok()[:-6], SIS)
+        self.assertEqual(e.exception.koodi, "llm_vastaus_ei_json")
+
+    def test_ympari_poimittu_vaara_muoto_on_skeemavirhe(self):
+        with self.assertRaises(tulos.TulosVirhe) as e:
+            tulos.lue('Arvio: {"tila": "ok", "sisalto": {"t": 1}}', SIS)
+        self.assertEqual(e.exception.koodi, "llm_skeema")
+
     def test_tuntematon_tila(self):
         with self.assertRaises(tulos.TulosVirhe):
             tulos.lue(json.dumps({"tila": "ehka", "sisalto": {"t": "a"}}), SIS)
