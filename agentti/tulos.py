@@ -44,6 +44,29 @@ def kuori_skeema(sisalto_skeema):
 _AITA = re.compile(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", re.DOTALL)
 
 
+_POIMINTA_YRITYKSET = 20
+
+
+def _poimi_json(teksti):
+    """Etsii tekstin seasta ensimmaisen JSON-olion, jolla on kentta 'tila'. Muuten None.
+
+    Kattaa tekstin JSONin ymparilla ja koodiaidan keskella tekstia. Katkennutta JSONia ei korjata.
+    """
+    dekooderi = json.JSONDecoder()
+    alku = teksti.find("{")
+    yrityksia = 0
+    while alku != -1 and yrityksia < _POIMINTA_YRITYKSET:
+        yrityksia += 1
+        try:
+            arvo, _ = dekooderi.raw_decode(teksti, alku)
+        except ValueError:
+            arvo = None
+        if isinstance(arvo, dict) and "tila" in arvo:
+            return arvo
+        alku = teksti.find("{", alku + 1)
+    return None
+
+
 def lue(teksti, sisalto_skeema):
     """Parsii LLM:n tekstivastauksen. Nostaa TulosVirhe, jos muoto ei kelpaa."""
     m = _AITA.match(teksti)
@@ -52,7 +75,9 @@ def lue(teksti, sisalto_skeema):
     try:
         data = json.loads(teksti)
     except ValueError:
-        raise TulosVirhe("llm_vastaus_ei_json")
+        data = _poimi_json(teksti)
+        if data is None:
+            raise TulosVirhe("llm_vastaus_ei_json")
     try:
         skeema.tarkista(data, kuori_skeema(sisalto_skeema))
     except skeema.SkeemaVirhe:
